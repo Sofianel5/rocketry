@@ -2,13 +2,13 @@ from motor import Motor
 import numpy as np
 
 bounds = [
-(0.06, 0.1),
-(0.125, 0.31),
-(0.125, 0.31),
-(0, 3),
-(0.005, 0.02),
-(0.005, 0.02),
-(0.01,0.1),
+(0.06, 0.1), #throat diameter
+(0.125, 0.31), #exit diameter
+(0.125, 0.31), # motor width
+(0.1, 3), #motor length
+(0.005, 0.02), #fin width
+(0.005, 0.02), #fin length
+(0.01,0.1), #inner width
 ]
 def randomVal(range):
     return round(np.random.uniform(low=range[0],high=range[1]), 4)
@@ -16,9 +16,10 @@ def evalFitnessFromValList(x):
     throat_dia = x[0]
     exit_dia = x[1]
     motor_width = x[2]
-    fin_width = x[3]
-    fin_len = x[4]
-    inner_width = x[5]
+    motor_length = x[3]
+    fin_width = x[4]
+    fin_len = x[5]
+    inner_width = x[6]
     propCollection = {
         'config': {
             'maxPressure': 1500 * 6895,
@@ -61,7 +62,7 @@ def evalFitnessFromValList(x):
                 'type': "Finocyl",
                 'properties': {
                     'diameter': motor_width,
-                    'length': 3,
+                    'length': 2,
                     'numFins': 6,
                     'finWidth': fin_width,
                     'finLength': fin_len,
@@ -82,6 +83,7 @@ def evalFitnessFromValList(x):
         ]
     }
     return fitness(Motor(propCollection).runSimulation())
+
 def createRandomMotorInstance():
     motor_width = randomVal(ranges['OUTER_DIAMTER_RANGE'])
     inner_width = randomVal(ranges['CORE_DIAMETER'])
@@ -167,6 +169,16 @@ def createRandomMotorInstance():
 #A perfectly fit motor will have a value of 0
 def fitness(simRes):
     val = 0
-    val += abs(simRes.getPeakKN() - 230)
-    val += abs(simRes.getPortRatio() - 2.5)*100
-    val += abs(simRes.getImpulse() - 250000)/1000
+    print(simRes.getPeakKN(), simRes.getPortRatio(), simRes.getImpulse())
+    if simRes.getPeakKN() > 200 and simRes.getPeakKN() < 250:
+        val += 0
+    else:
+        val += abs(simRes.getPeakKN() - 230)*100
+    if simRes.getPortRatio() > 2.2 and simRes.getPortRatio() < 3:
+        val += 0
+    else:
+        val += abs(simRes.getPortRatio() - 2.5)*300
+    val -= simRes.getImpulse()/500
+    return val
+
+print(evalFitnessFromValList([0.06830228,0.125,0.125,0.15060249,0.02,0.02,0.1]))
